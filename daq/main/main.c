@@ -8,6 +8,7 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 
+#include "daqPacket.h"
 #include "daqLoop.h"
 #include "systemLoop.h"
 
@@ -27,9 +28,11 @@ void app_main(void)
     printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
+    struct DAQPacket daqPacket;
+    
     // use uxTaskGetStackHighWaterMark() to figure out how big the stack sizes should actualy be
     printf("Launching system task on core 0\n");
-    xTaskCreatePinnedToCore(systemLoop, "System Task", 10000, NULL, 1, NULL, 0);
+    xTaskCreatePinnedToCore(systemLoop, "System Task", 10000, (void*)&daqPacket, 1, NULL, 0);
     printf("Launching DAQ task on core 1\n");
-    xTaskCreatePinnedToCore(daqLoop, "DAQ Task", 10000, NULL, 10, NULL, 1);
+    xTaskCreatePinnedToCore(daqLoop, "DAQ Task", 10000, (void*)&daqPacket, 10, NULL, 1);
 }
