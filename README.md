@@ -54,8 +54,8 @@ If you run into any issues please message James.
 
 - [x] Multithreading
 - [ ] Gyroscope reading `Scott`
-- [ ] Air speed sensor reading
-- [ ] SD card writing `James`
+- [ ] Air speed sensor reading `James`
+- [x] SD card writing
 - [ ] SD card reading
 - [ ] Online sensor fusion
 - [ ] Offline sensor fusion
