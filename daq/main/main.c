@@ -12,27 +12,16 @@
 #include "daqLoop.h"
 #include "systemLoop.h"
 
-void app_main(void)
-{
-    printf("Carbon Corvus Aeronautics DAQ Startup\n");
-
-    /* Print chip information */
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    printf("This is ESP32 chip with %d CPU cores, WiFi%s%s, ",
-            chip_info.cores,
-            (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-            (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-
-    printf("silicon revision %d, ", chip_info.revision);
-    printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+void app_main(void) {
+    ESP_LOGI("app_main", "Carbon Corvus Aeronautics DAQ Startup");
 
     struct DAQPacket daqPacket;
     
     // use uxTaskGetStackHighWaterMark() to figure out how big the stack sizes should actualy be
-    printf("Launching system task on core 0\n");
+    ESP_LOGI("app_main", "Launching system task on core 0");
     xTaskCreatePinnedToCore(systemLoop, "System Task", 10000, (void*)&daqPacket, 1, NULL, 0);
-    printf("Launching DAQ task on core 1\n");
+    ESP_LOGI("app_main", "Launching DAQ task on core 1");
     xTaskCreatePinnedToCore(daqLoop, "DAQ Task", 10000, (void*)&daqPacket, 10, NULL, 1);
+    ESP_LOGI("app_main", "Launching kill DAQ in 10 task on core 0");
+    xTaskCreatePinnedToCore(killDaqLoopDelay, "DAQ Task", 10000, NULL, 2, NULL, 0);
 }
