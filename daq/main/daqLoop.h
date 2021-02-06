@@ -78,10 +78,21 @@ void daqLoop (void * pvParameters) {
 
         // test code
         daqPacket.testValue++;
-        vTaskDelay(10);
 
         // write data to SC card
-        fprintf(sd_card_file, "%i\n", daqPacket.testValue);            
+        // fprintf(sd_card_file, "%i\n", daqPacket.testValue);  
+        
+        // write bytes to SD card
+        putc(0xff, sd_card_file); // delimiter byte 0xff
+        uint32_t timeBytes = esp_timer_get_time();
+        putc((uint8_t)(timeBytes >> 24), sd_card_file); // timeing bytes in microsecconds
+        putc((uint8_t)(timeBytes >> 16), sd_card_file);
+        putc((uint8_t)(timeBytes >> 8), sd_card_file);
+        putc((uint8_t)(timeBytes >> 0), sd_card_file);
+        putc(0x00, sd_card_file); // delimiter byte 0x00
+        putc(daqPacket.testValue, sd_card_file); // data bytes
+        putc(0x00, sd_card_file); // delimiter byte 0x00
+        // end writing data bytes to SD card
 
         *(struct DAQPacket*)pvParameters = daqPacket; // send data in packet back to main
     }
@@ -94,9 +105,15 @@ void daqLoop (void * pvParameters) {
 }
 
 void killDaqLoopDelay (void * pvParameters) {
-    ESP_LOGW("killDaqLoopDelay", "stopping daq loop in %ims", *(int*)pvParameters);
-    vTaskDelay(*(int*)pvParameters / portTICK_PERIOD_MS);
+    ESP_LOGW("killDaqLoopDelay", "stopping daq loop in 10000ms");
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
     aquireData = false;
     ESP_LOGW("killDaqLoopDelay", "daq loop stopped");
+    vTaskDelete(NULL); // kill this task
+}
+
+void killDaqLoop (void * pvParameters) {
+    aquireData = false;
+    ESP_LOGW("killDaqLoop", "daq loop stopped");
     vTaskDelete(NULL); // kill this task
 }
