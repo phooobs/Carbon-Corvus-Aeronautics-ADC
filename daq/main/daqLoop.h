@@ -70,6 +70,8 @@ void daqLoop (void * pvParameters) {
         vTaskDelete(NULL); // kill this task
     }
 
+    ESP_LOGI("daqLoop", "Card mounted and file openend");
+
     daqPacket.testValue = 0;
     aquireData = true;
     while (aquireData) { // loop untill told not to
@@ -87,13 +89,14 @@ void daqLoop (void * pvParameters) {
     // Unmount SD card
     fclose(sd_card_file);
     esp_vfs_fat_sdmmc_unmount();
-    ESP_LOGI("daqLoop", "Card unmounted");
+    ESP_LOGI("daqLoop", "File closed and card unmounted");
     vTaskDelete(NULL); // kill this task
 }
 
-void killDaqLoop10 (void * pvParameters) {
-    vTaskDelay(600000 / portTICK_PERIOD_MS); // delay 10 minutes, 600 secconds, 600000 milisecconds
+void killDaqLoopDelay (void * pvParameters) {
+    ESP_LOGW("killDaqLoopDelay", "stopping daq loop in %ims", *(int*)pvParameters);
+    vTaskDelay(*(int*)pvParameters / portTICK_PERIOD_MS);
     aquireData = false;
-    ESP_LOGW("killDaqLoop10", "stopping daq loop");
+    ESP_LOGW("killDaqLoopDelay", "daq loop stopped");
     vTaskDelete(NULL); // kill this task
 }

@@ -23,5 +23,6 @@ void app_main(void) {
     ESP_LOGI("app_main", "Launching DAQ task on core 1");
     xTaskCreatePinnedToCore(daqLoop, "DAQ Task", 10000, (void*)&daqPacket, 10, NULL, 1);
     ESP_LOGI("app_main", "Launching kill DAQ in 10 task on core 0");
-    xTaskCreatePinnedToCore(killDaqLoop10, "DAQ Task", 10000, (void*)&daqPacket, 2, NULL, 0);
+    int delayMS = 600000; // 10 minutes
+    xTaskCreatePinnedToCore(killDaqLoopDelay, "DAQ Task", 10000, (void*)&delayMS, 2, NULL, 0);
 }
