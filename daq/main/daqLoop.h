@@ -24,12 +24,13 @@
     // GPIO 2 -- GPIO 0 -- D0 -- 10k pullup
     // D3 -- 10k pullup
 
+bool aquireData;
+
 void daqLoop (void * pvParameters) {
     struct DAQPacket daqPacket;
 
     // 1-line SD card init
-    static const char *TAG = "SD card";
-    ESP_LOGI(TAG, "Using SDMMC peripheral");
+    ESP_LOGI("daqLoop", "Attempting to mount SDMMC peripheral at /sd");
     sdmmc_host_t host = SDMMC_HOST_DEFAULT();
     sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
     slot_config.width = 1;
@@ -51,39 +52,48 @@ void daqLoop (void * pvParameters) {
 
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount filesystem. "
+            ESP_LOGE("daqLoop", "Failed to mount filesystem. "
                 "If you want the card to be formatted, set format_if_mount_failed = true.");
         } else {
-            ESP_LOGE(TAG, "Failed to initialize the card (%s). "
+            ESP_LOGE("daqLoop", "Failed to initialize the card (%s). "
                 "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
         }
         vTaskDelete(NULL); // kill this task
     }
 
+
+    // Create and open file
+    // note there is a file name length limit
+    FILE* sd_card_file = fopen("/sd/w_t.raw", "w");
+    if (sd_card_file == NULL) {
+        ESP_LOGE("daqLoop", "Failed to open file for writing");
+        vTaskDelete(NULL); // kill this task
+    }
+
     daqPacket.testValue = 0;
-    for (;;) { // loop  forever
+    aquireData = true;
+    while (aquireData) { // loop untill told not to
 
         // test code
         daqPacket.testValue++;
         vTaskDelay(10);
 
-        // opening and closing the file like this may be slow
-
         // write data to SC card
-        // Create and open file
-        // note there is a file name length limit
-        FILE* sd_card_file = fopen("/sd/w_t.raw", "a");
-        if (sd_card_file == NULL) {
-            ESP_LOGE(TAG, "Failed to open file for writing");
-            vTaskDelete(NULL); // kill this task
-        }
         fprintf(sd_card_file, "%i\n", daqPacket.testValue);            
-        fclose(sd_card_file);
 
         *(struct DAQPacket*)pvParameters = daqPacket; // send data in packet back to main
     }
     
     // Unmount SD card
+    fclose(sd_card_file);
     esp_vfs_fat_sdmmc_unmount();
-    ESP_LOGI(TAG, "Card unmounted");
+    ESP_LOGI("daqLoop", "Card unmounted");
+    vTaskDelete(NULL); // kill this task
+}
+
+void killDaqLoop10 (void * pvParameters) {
+    vTaskDelay(600000 / portTICK_PERIOD_MS); // delay 10 minutes, 600 secconds, 600000 milisecconds
+    aquireData = false;
+    ESP_LOGW("killDaqLoop10", "stopping daq loop");
+    vTaskDelete(NULL); // kill this task
 }
