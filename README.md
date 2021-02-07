@@ -13,7 +13,7 @@ Austin McCaw, Elizabeth Blackwater, Orion Clay, Arielle Platero
 For all of the following steps and installers, use the default settings. If you run into any issues please message James.
 
 1. Install [VS code](https://code.visualstudio.com/Download).
-2. Install [Python 3](https://www.python.org/downloads/).
+2. Install [Python 3.8](https://www.python.org/downloads/). Python 3.9 will not work.
 3. Install [Git](https://git-scm.com/download/win).
 4. Run Windows PowerShell (It is preinstalled on Windows computers).
 5. Type in the following commands.
