@@ -5,115 +5,140 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/unistd.h>
-#include <sys/stat.h>
-#include "esp_err.h"
-#include "esp_log.h"
-#include "esp_vfs_fat.h"
-#include "driver/sdmmc_host.h"
-#include "driver/sdspi_host.h"
-#include "sdmmc_cmd.h"
-
 #include "daqPacket.h"
-
-// SD card connections
-    // GPIO 15 -- CMD -- 10k pullup
-    // GPIO 14 -- CLK
-    // GPIO 2 -- GPIO 0 -- D0 -- 10k pullup
-    // D3 -- 10k pullup
-
-bool aquireData;
+#include "driver/spi_master.h"
+#include "driver/spi_common.h"
+#include "esp_log.h"
+#include <string.h>
 
 void daqLoop (void * pvParameters) {
     struct DAQPacket daqPacket;
-
-    // 1-line SD card init
-    ESP_LOGI("daqLoop", "Attempting to mount SDMMC peripheral at /sd");
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    slot_config.width = 1;
-
-    // Set internal GPIO pullups for SD card pins
-    gpio_set_pull_mode(GPIO_NUM_15, GPIO_PULLUP_ONLY); // CMD
-    gpio_set_pull_mode(GPIO_NUM_2, GPIO_PULLUP_ONLY); // D0
-
-    // Options for mounting the filesystem.
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-        .format_if_mount_failed = false,
-        .max_files = 5,
-        .allocation_unit_size = 16 * 1024
-    };
-
-    // Try to mount SD card at /sd
-    sdmmc_card_t* card;
-    esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sd", &host, &slot_config, &mount_config, &card);
-
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
-            ESP_LOGE("daqLoop", "Failed to mount filesystem. "
-                "If you want the card to be formatted, set format_if_mount_failed = true.");
-        } else {
-            ESP_LOGE("daqLoop", "Failed to initialize the card (%s). "
-                "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
-        }
-        vTaskDelete(NULL); // kill this task
-    }
-
-
-    // Create and open file
-    // note there is a file name length limit
-    FILE* sd_card_file = fopen("/sd/w_t.raw", "w");
-    if (sd_card_file == NULL) {
-        ESP_LOGE("daqLoop", "Failed to open file for writing");
-        vTaskDelete(NULL); // kill this task
-    }
-
-    ESP_LOGI("daqLoop", "Card mounted and file openend");
-
     daqPacket.testValue = 0;
-    aquireData = true;
-    while (aquireData) { // loop untill told not to
+
+    // Test SPI code
+
+    // setup SPI bus
+
+    ESP_LOGI("spi_init", "setup bus");
+    spi_bus_config_t buscfg;
+    buscfg.mosi_io_num = 23;
+    buscfg.miso_io_num = 19;
+    buscfg.sclk_io_num = 18;
+    buscfg.quadwp_io_num = -1;
+    buscfg.quadhd_io_num = -1;
+
+    esp_err_t ret;
+    ret=spi_bus_initialize(SPI3_HOST, &buscfg, 0);
+    ESP_ERROR_CHECK(ret);
+
+    // setup each sensor
+    ESP_LOGI("spi_init", "setup sensor");
+    spi_device_handle_t spi;
+
+    spi_device_interface_config_t devcfg;
+    devcfg.clock_speed_hz=100*1000; // clock speed 0.1MHz
+    devcfg.mode = 3; // SPI mode
+    devcfg.spics_io_num = 5; // CS pin
+    devcfg.queue_size = 1;
+    devcfg.cs_ena_pretrans = 2;
+    devcfg.cs_ena_posttrans = 0;
+    devcfg.command_bits = 8;
+    devcfg.address_bits = 0;
+    devcfg.dummy_bits = 0;
+    devcfg.flags = SPI_DEVICE_HALFDUPLEX;
+    devcfg.duty_cycle_pos = 128; // 50% duty cycle 
+    devcfg.input_delay_ns = 0;
+    
+    ret=spi_bus_add_device(SPI3_HOST, &devcfg, &spi);
+    ESP_ERROR_CHECK(ret);
+
+    // // read register
+    // ESP_LOGI("spi_init", "transaction");
+    spi_transaction_t transaction;
+    // memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
+    // transaction.length = 8; // only sent one bit address read command
+    // transaction.rxlength = 8; // reister is 1 byte
+    // transaction.cmd = 0b11101010; // Read (0b1) register 106 User Control (0b1101010)
+    // transaction.user=(void*)1; //D/C needs to be set to 1
+    // ret=spi_device_transmit(spi, &transaction);  //Transmit!
+    // assert(ret==ESP_OK); //Should have had no issues.
+    // ESP_LOGI("spi_init", "Byte recived: %i\n", transaction.tx_data[0]);
+
+    // write register
+    // ESP_LOGI("spi_init", "write data");
+    // memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
+    // transaction.length= 8 * 2; // sent two bit address write command
+    // transaction.rxlength = 0; // reister is one byte
+    // transaction.cmd = 0b0110101000010000; // Write (0b0) register 106 User Control (0b1101010) and data (0b00010000)
+    // transaction.user=(void*)1; //D/C needs to be set to 1
+    // ret=spi_device_transmit(spi, &transaction);  //Transmit!
+    // assert(ret==ESP_OK); //Should have had no issues.
+
+    // // read again
+    // memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
+    // transaction.length=8; // only sent one bit address read command
+    // transaction.rxlength=8; // reister is 1 byte
+    // transaction.cmd = 0b11101010; // Read (0b1) register 106 User Control (0b1101010)
+    // transaction.user=(void*)1; //D/C needs to be set to 1
+    // ret=spi_device_transmit(spi, &transaction);  //Transmit!
+    // assert(ret==ESP_OK); //Should have had no issues.
+    // ESP_LOGI("spi_init", "Byte recived: %i\n", transaction.tx_data[0]);
+    // // End test SPI code
+
+    // // read register
+    // ESP_LOGI("spi_init", "transaction");
+    // memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
+    // transaction.length = 8; // only sent one bit address read command
+    // transaction.rxlength = 8; // reister is 1 byte
+    // transaction.cmd = 0b11110101; // Read (0b1) register 117 User Control (0b1110101)
+    // transaction.user=(void*)1; //D/C needs to be set to 1
+    // ret=spi_device_transmit(spi, &transaction);  //Transmit!
+    // assert(ret==ESP_OK); //Should have had no issues.
+    // ESP_LOGI("spi_init", "Byte recived: %i\n", transaction.tx_data[0]);
+
+    for (;;) { // loop  forever
 
         // test code
         daqPacket.testValue++;
-
-        // write data to SC card
-        // fprintf(sd_card_file, "%i\n", daqPacket.testValue);  
-        
-        // write bytes to SD card
-        putc(0xff, sd_card_file); // delimiter byte 0xff
-        uint32_t timeBytes = esp_timer_get_time();
-        putc((uint8_t)(timeBytes >> 24), sd_card_file); // timeing bytes in microsecconds
-        putc((uint8_t)(timeBytes >> 16), sd_card_file);
-        putc((uint8_t)(timeBytes >> 8), sd_card_file);
-        putc((uint8_t)(timeBytes >> 0), sd_card_file);
-        putc(0x00, sd_card_file); // delimiter byte 0x00
-        putc(daqPacket.testValue, sd_card_file); // data bytes
-        putc(0x00, sd_card_file); // delimiter byte 0x00
-        // end writing data bytes to SD card
+        vTaskDelay(10);
 
         *(struct DAQPacket*)pvParameters = daqPacket; // send data in packet back to main
+
+        ESP_LOGI("spi_init", "write data");
+        memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
+        transaction.length= 8; // sent two bit address write command
+        transaction.rxlength = 0; // reister is one byte
+        transaction.cmd = 0b01101010; // Write (0b0) register 106 User Control (0b1101010)
+        uint8_t data = 0b00010000; // data (0b00010000)
+        transaction.tx_buffer = &data;
+        transaction.user=(void*)1; //D/C needs to be set to 1
+        ret=spi_device_transmit(spi, &transaction);  //Transmit!
+        assert(ret==ESP_OK); //Should have had no issues.
+
+        // read register
+        ESP_LOGI("spi_init", "transaction");
+        memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
+        transaction.length = 8; // only sent one bit address read command
+        transaction.rxlength = 8; // reister is 1 byte
+        data = 0x00; // dont send anything
+        transaction.tx_buffer = &data;
+        transaction.cmd = 0b11110101; // Read (0b1) register 117 User Control (0b1110101)
+        transaction.user=(void*)1; //D/C needs to be set to 1
+        ret=spi_device_transmit(spi, &transaction);  //Transmit!
+        assert(ret==ESP_OK); //Should have had no issues.
+        // uint8_t readData = *(uint8_t*)(transaction.rx_buffer);
+        // ESP_LOGI("spi_init", "Byte recived: %i\n", readData);
+        
+        // read register
+        ESP_LOGI("spi_init", "transaction");
+        memset(&transaction, 0, sizeof(transaction)); // zero out the transaction
+        transaction.length = 8; // only sent one bit address read command
+        transaction.rxlength = 8; // reister is 1 byte
+        data = 0x00; // dont send anything
+        transaction.tx_buffer = &data;
+        transaction.cmd = 0; // Read (0b1) register 117 User Control (0b1110101)
+        transaction.user=(void*)1; //D/C needs to be set to 1
+        ret=spi_device_transmit(spi, &transaction);  //Transmit!
+        assert(ret==ESP_OK); //Should have had no issues.
     }
-    
-    // Unmount SD card
-    fclose(sd_card_file);
-    esp_vfs_fat_sdmmc_unmount();
-    ESP_LOGI("daqLoop", "File closed and card unmounted");
-    vTaskDelete(NULL); // kill this task
-}
-
-void killDaqLoopDelay (void * pvParameters) {
-    ESP_LOGW("killDaqLoopDelay", "stopping daq loop in 10000ms");
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
-    aquireData = false;
-    ESP_LOGW("killDaqLoopDelay", "daq loop stopped");
-    vTaskDelete(NULL); // kill this task
-}
-
-void killDaqLoop (void * pvParameters) {
-    aquireData = false;
-    ESP_LOGW("killDaqLoop", "daq loop stopped");
-    vTaskDelete(NULL); // kill this task
 }
