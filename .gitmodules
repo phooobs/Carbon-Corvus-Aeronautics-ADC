@@ -1,3 +1,4 @@
 [submodule "daq/components/arduino"]
+	branch = idf-release/v4.0
 	path = daq/components/arduino
 	url = https://github.com/espressif/arduino-esp32
