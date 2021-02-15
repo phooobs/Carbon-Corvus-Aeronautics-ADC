@@ -1,6 +1,4 @@
-/* 
-    Entry point for the aircraft's daq and control system
-*/
+#include "Arduino.h"
 
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -12,7 +10,13 @@
 #include "daqLoop.h"
 #include "systemLoop.h"
 
-void app_main(void) {
+extern "C" void app_main()
+{
+    initArduino();
+    pinMode(4, OUTPUT);
+    digitalWrite(4, HIGH);
+    // Do your own thing
+
     ESP_LOGI("app_main", "Carbon Corvus Aeronautics DAQ Startup");
 
     struct DAQPacket daqPacket;
