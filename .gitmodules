@@ -1,3 +1,0 @@
-[submodule "daq/components/arduino"]
-	path = daq/components/arduino
-	url = https://github.com/espressif/arduino-esp32
