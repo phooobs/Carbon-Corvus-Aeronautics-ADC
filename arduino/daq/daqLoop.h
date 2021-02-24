@@ -15,6 +15,7 @@
 #include "driver/sdmmc_host.h"
 #include "driver/sdspi_host.h"
 #include "sdmmc_cmd.h"
+#include <Wire.h>
 
 #include "daqPacket.h"
 
@@ -24,9 +25,19 @@
 // GPIO 2 -- GPIO 0 -- D0 -- 10k pullup
 // D3 -- 10k pullup
 
+// Airspeed sensor connections
+// GPIO 22 -- SCL -- 10k pullup
+// GPIO 21 -- SDA -- 10k pullup
+
+#define MS4525DO_ADDRESS 0x28
+
 bool aquireData;
 
 void daqLoop(void *pvParameters) {
+
+  // start I2C for airspeed sensor
+  Wire.begin();
+
   DAQPacket daqPacket;
 
   // 1-line SD card init
@@ -78,10 +89,15 @@ void daqLoop(void *pvParameters) {
     // test code
     daqPacket.testValue++;
 
-    // write data to SC card
-    // fprintf(sd_card_file, "%i\n", daqPacket.testValue);
+    // request and read 4 bytes from airspeed sensor
+    #define MS4525DO_BYTES 4
+    Wire.requestFrom(MS4525DO_ADDRESS, MS4525DO_BYTES, true);
+    if (Wire.available() == MS4525DO_BYTES) {
+      for (int i = 0; i < MS4525DO_BYTES; i++) {
+        daqPacket.ms4525doData[i] = Wire.read();
+      }
+    }
 
-    
     // write bytes to SD card
     putc(0xff, sd_card_file); // delimiter byte 0xff
     uint32_t timeBytes = esp_timer_get_time();
@@ -89,12 +105,12 @@ void daqLoop(void *pvParameters) {
     putc((uint8_t)(timeBytes >> 16), sd_card_file);
     putc((uint8_t)(timeBytes >> 8), sd_card_file);
     putc((uint8_t)(timeBytes >> 0), sd_card_file);
-    putc(0x00, sd_card_file);                // delimiter byte 0x00
-    putc(daqPacket.testValue, sd_card_file); // data bytes
-    putc(0x00, sd_card_file);                // delimiter byte 0x00
+    // write ms4525do data
+    for (int i = 0; i < MS4525DO_BYTES; i++) {
+      putc(daqPacket.ms4525doData[i], sd_card_file);
+    }
     // end writing data bytes to SD card
     
-
     *(DAQPacket*)pvParameters = daqPacket; // send data in packet back to main
   }
 
