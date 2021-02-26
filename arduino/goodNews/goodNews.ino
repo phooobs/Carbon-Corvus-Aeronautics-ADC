@@ -112,6 +112,10 @@ void fGetIMU( void *pvParameters )
   int16_t  _axcounts2, _aycounts2, _azcounts2;
   int16_t _gxcounts2, _gycounts2, _gzcounts2;
   int16_t _hxcounts2, _hycounts2, _hzcounts2;
+
+  int16_t  _axcounts3, _aycounts3, _azcounts3;
+  int16_t _gxcounts3, _gycounts3, _gzcounts3;
+  int16_t _hxcounts3, _hycounts3, _hzcounts3;
   // data buffer
   float _accelScale;
   float _gyroScale;
@@ -161,6 +165,24 @@ void fGetIMU( void *pvParameters )
   dev2_config.post_cb          = NULL;
   Serial.print (" Adding device bus error = ");
   intError = spi_bus_add_device(HSPI_HOST, &dev2_config, &hAG2);
+  Serial.println ( intError );
+  /////////////////////////////////////////////////
+  spi_device_interface_config_t dev3_config = { };  // initializes all field to 0
+  dev3_config.address_bits     = 0;
+  dev3_config.command_bits     = 0;
+  dev3_config.dummy_bits       = 0;
+  dev3_config.mode             = SPI_MODE3;
+  dev3_config.duty_cycle_pos   = 0;
+  dev3_config.cs_ena_posttrans = 0;
+  dev3_config.cs_ena_pretrans  = 0;
+  dev3_config.clock_speed_hz   = 1000000; // mpu 9250 spi read registers safe up to 1Mhz.
+  dev3_config.spics_io_num     = CS03;
+  dev3_config.flags            = 0;
+  dev3_config.queue_size       = 1;
+  dev3_config.pre_cb           = NULL;
+  dev3_config.post_cb          = NULL;
+  Serial.print (" Adding device bus error = ");
+  intError = spi_bus_add_device(HSPI_HOST, &dev3_config, &hAG3);
   Serial.println ( intError );
   ////// spi_transaction_t trans_desc = { };
   fWrite_AK8963( AK8963_CNTL1, AK8963_PWR_DOWN, hAG1 );
@@ -338,6 +360,95 @@ void fGetIMU( void *pvParameters )
     }
   }
   ////////////////////////////////////////////////////////////////
+   ////// spi_transaction_t trans_desc = { };
+  fWrite_AK8963( AK8963_CNTL1, AK8963_PWR_DOWN, hAG3 );
+  vTaskDelay ( 100 );
+  // select clock source to gyro
+  fWriteSPIdata8bits( PWR_MGMNT_1, CLOCK_SEL_PLL, hAG3 );
+  vTaskDelay(1);
+  // Do who am I MPU9250
+  fReadMPU9250 ( 2 , WHO_AM_I, hAG3 );
+  if ( (WHO_I_AMa == rxData[1]) || (WHO_I_AMb == rxData[1]) )
+  {
+    MPU9250_OK = true;
+  }
+  else
+  {
+    Serial.print( " I am not MPU9250! I am: ");
+    Serial.println ( rxData[1] );
+  }
+  if ( MPU9250_OK )
+  {
+    // enable I2C master mode
+    fWriteSPIdata8bits( USER_CTRL, I2C_MST_EN, hAG3 );
+    vTaskDelay(1);
+    // set the I2C bus speed to 400 kHz
+    fWriteSPIdata8bits( I2C_MST_CTRL, I2C_MST_CLK, hAG3 );
+    vTaskDelay(1);
+    fWriteSPIdata8bits( SMPDIV, 0x04, hAG3 );
+    vTaskDelay(1);
+    fWriteSPIdata8bits( ACCEL_CONFIG2, ACCEL_DLPF_184, hAG3 );
+    fWriteSPIdata8bits( CONFIG, GYRO_DLPF_184, hAG3 );
+    vTaskDelay(1);
+    // check AK8963_WHO_AM_I
+    fReadAK8963( AK8963_WHO_AM_I, 1, hAG3);
+    vTaskDelay(500); // giving the AK8963 lots of time to recover from reset
+    fReadMPU9250( 2 , EXT_SENS_DATA_00, hAG3 );
+    if ( AK8963_IS == rxData[1] )
+    {
+      AK8963_OK = true;
+    }
+    else
+    {
+      Serial.print ( " AK8963_OK data return = " );
+      Serial.print ( rxData[0] );
+      Serial.println ( rxData[1] );
+    }
+    if ( AK8963_OK )
+    {
+      // set AK8963 to FUSE ROM access
+      fWrite_AK8963 ( AK8963_CNTL1, AK8963_FUSE_ROM, hAG3 );
+      vTaskDelay ( 100 ); // delay for mode change
+      //  // setting the accel range to 16G
+      fWriteSPIdata8bits( ACCEL_CONFIG, ACCEL_FS_SEL_16G, hAG3 );
+      _accelScale = 16.0f / 32768.0f; // setting the accel scale to 16G
+      // set gyro scale
+      fWriteSPIdata8bits( GYRO_CONFIG, GYRO_FS_SEL_1000DPS, hAG3 );
+      _gyroScale = 1000.0f / 32768.0f;
+      // read the AK8963 ASA registers and compute magnetometer scale factors
+      // set accel scale
+      fReadAK8963(AK8963_ASA, 3, hAG3 );
+      fReadMPU9250 ( 3 , EXT_SENS_DATA_00, hAG3 );
+      // convert to mG multiply by 10
+      _magScaleX = ((((float)rxData[0]) - 128.0f) / (256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
+      _magScaleY = ((((float)rxData[1]) - 128.0f) / (256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
+      _magScaleZ = ((((float)rxData[2]) - 128.0f) / (256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
+      Serial.print( " _magScaleX " );
+      Serial.print( _magScaleX );
+      Serial.print( " , " );
+      Serial.print( " _magScaleY " );
+      Serial.print( _magScaleY );
+      Serial.print( " , " );
+      Serial.print( " _magScaleZ " );
+      Serial.print( _magScaleZ );
+      Serial.print( " , " );
+      Serial.println();
+      // set AK8963 to 16 bit resolution, 100 Hz update rate
+      fWrite_AK8963( AK8963_CNTL1, AK8963_CNT_MEAS2, hAG3 );
+      // delay for mode change
+      vTaskDelay ( 100 );
+      fReadAK8963(AK8963_HXL, 7, hAG3 );
+      ///////////////////////////////////////////////
+      /* setting the interrupt */
+      // INT_PIN_CFG,INT_PULSE_50US setup interrupt, 50 us pulse
+      fWriteSPIdata8bits( INT_PIN_CFG, INT_PULSE_50US, hAG3 );
+      // INT_ENABLE,INT_RAW_RDY_EN set to data ready
+      fWriteSPIdata8bits( INT_ENABLE, INT_RAW_RDY_EN, hAG3 );
+      pinMode( MPU_int_Pin3, INPUT );
+      attachInterrupt( MPU_int_Pin3, triggerGet_IMU, RISING );
+    }
+  }
+  ////////////////////////////////////////////////////////////////
   while (1)
   {
     xEventGroupWaitBits (eg, evtGetIMU, pdTRUE, pdTRUE, portMAX_DELAY);
@@ -347,7 +458,7 @@ void fGetIMU( void *pvParameters )
       _axcounts1 = (int16_t)(((int16_t)rxData[2] << 8) | rxData[3]) ;
       _aycounts1 = (int16_t)(((int16_t)rxData[4] << 8) | rxData[5]) ;
       _azcounts1 = (int16_t)(((int16_t)rxData[6] << 8) | rxData[7]) ;
-       fReadMPU9250 ( 6 , GYRO_OUTX, hAG1 );
+      fReadMPU9250 ( 6 , GYRO_OUTX, hAG1 );
       _gxcounts1 = (int16_t)(((int16_t)rxData[0]) << 8) | rxData[1];
       _gycounts1 = (int16_t)(((int16_t)rxData[2]) << 8) | rxData[3];
       _gzcounts1 = (int16_t)(((int16_t)rxData[4]) << 8) | rxData[5];
@@ -358,17 +469,17 @@ void fGetIMU( void *pvParameters )
       //**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//
       // Prints raw accelerometer data
       //**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//
-      Serial.print ( " ");
-      Serial.print ( _axcounts1 );
-      Serial.print ( " " );
-      Serial.print ( _aycounts1 );
+//      Serial.print ( " ");
+//      Serial.print ( _axcounts1 );
+//      Serial.print ( " " );
+//      Serial.print ( _aycounts1 );
       Serial.print ( " " );
       Serial.println ( _azcounts1 );
       fReadMPU9250 ( 8 , 0X3A, hAG2 );
       _axcounts2 = (int16_t)(((int16_t)rxData[2] << 8) | rxData[3]) ;
       _aycounts2 = (int16_t)(((int16_t)rxData[4] << 8) | rxData[5]) ;
       _azcounts2 = (int16_t)(((int16_t)rxData[6] << 8) | rxData[7]) ;
-       fReadMPU9250 ( 6 , GYRO_OUTX, hAG2 );
+      fReadMPU9250 ( 6 , GYRO_OUTX, hAG2 );
       _gxcounts2 = (int16_t)(((int16_t)rxData[0]) << 8) | rxData[1];
       _gycounts2 = (int16_t)(((int16_t)rxData[2]) << 8) | rxData[3];
       _gzcounts2 = (int16_t)(((int16_t)rxData[4]) << 8) | rxData[5];
@@ -379,12 +490,33 @@ void fGetIMU( void *pvParameters )
       //**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//
       // Prints raw accelerometer data
       //**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//
-      Serial.print ( " ");
-      Serial.print ( _axcounts2 );
-      Serial.print ( " " );
-      Serial.print ( _aycounts2 );
+//      Serial.print ( " ");
+//      Serial.print ( _axcounts2 );
+//      Serial.print ( " " );
+//      Serial.print ( _aycounts2 );
       Serial.print ( " " );
       Serial.println ( _azcounts2 );
+      fReadMPU9250 ( 8 , 0X3A, hAG3 );
+      _axcounts3 = (int16_t)(((int16_t)rxData[2] << 8) | rxData[3]) ;
+      _aycounts3 = (int16_t)(((int16_t)rxData[4] << 8) | rxData[5]) ;
+      _azcounts3 = (int16_t)(((int16_t)rxData[6] << 8) | rxData[7]) ;
+      fReadMPU9250 ( 6 , GYRO_OUTX, hAG3 );
+      _gxcounts3 = (int16_t)(((int16_t)rxData[0]) << 8) | rxData[1];
+      _gycounts3 = (int16_t)(((int16_t)rxData[2]) << 8) | rxData[3];
+      _gzcounts3 = (int16_t)(((int16_t)rxData[4]) << 8) | rxData[5];
+      fReadMPU9250 ( 6 , EXT_SENS_DATA_00, hAG3 );
+      _hxcounts3 = ((int16_t)rxData[1] << 8) | rxData[0] ;
+      _hycounts3 = ((int16_t)rxData[3] << 8) | rxData[2] ;;
+      _hzcounts3 = ((int16_t)rxData[5] << 8) | rxData[4] ;;
+      //**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//
+      // Prints raw accelerometer data
+      //**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//
+//      Serial.print ( " ");
+//      Serial.print ( _axcounts3 );
+//      Serial.print ( " " );
+//      Serial.print ( _aycounts3 );
+      Serial.print ( " " );
+      Serial.println ( _azcounts3 );
     }
     else
     {
