@@ -695,7 +695,7 @@ void daqLoop(void *pvParameters) {
     }
     // write mpu9250 data
     for (int i = 0; i < 3; i++) {
-      for (int j = 0; i < 18; i++) {
+      for (int j = 0; j < 18; j++) {
         putc(daqPacket.mpu9250Data[i][j], sd_card_file);
       }
     }
