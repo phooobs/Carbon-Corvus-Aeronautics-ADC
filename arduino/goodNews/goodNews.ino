@@ -21,7 +21,7 @@ EventGroupHandle_t eg;
 #define TaskStack30K 30000
 #define Priority4 4
 #define MPU_int_Pin1 34
-#define MPU_int_Pin2 21
+#define MPU_int_Pin2 17
 #define MPU_int_Pin3 16
 ////////////////////////////////////////
 spi_device_handle_t hAG1;
@@ -474,7 +474,7 @@ void fGetIMU( void *pvParameters )
 //      Serial.print ( " " );
 //      Serial.print ( _aycounts1 );
       Serial.print ( " " );
-      Serial.println ( _azcounts1 );
+      Serial.print ( _azcounts1 );
       fReadMPU9250 ( 8 , 0X3A, hAG2 );
       _axcounts2 = (int16_t)(((int16_t)rxData[2] << 8) | rxData[3]) ;
       _aycounts2 = (int16_t)(((int16_t)rxData[4] << 8) | rxData[5]) ;
@@ -495,7 +495,7 @@ void fGetIMU( void *pvParameters )
 //      Serial.print ( " " );
 //      Serial.print ( _aycounts2 );
       Serial.print ( " " );
-      Serial.println ( _azcounts2 );
+      Serial.print ( _azcounts2 );
       fReadMPU9250 ( 8 , 0X3A, hAG3 );
       _axcounts3 = (int16_t)(((int16_t)rxData[2] << 8) | rxData[3]) ;
       _aycounts3 = (int16_t)(((int16_t)rxData[4] << 8) | rxData[5]) ;

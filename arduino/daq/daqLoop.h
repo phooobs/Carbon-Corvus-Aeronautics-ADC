@@ -43,7 +43,7 @@ EventGroupHandle_t eg;
 #define TaskStack30K 30000
 #define Priority4 4
 #define MPU_int_Pin1 34
-#define MPU_int_Pin2 21
+#define MPU_int_Pin2 17
 #define MPU_int_Pin3 16
 ////////////////////////////////////////
 spi_device_handle_t hAG1;
@@ -112,7 +112,7 @@ uint8_t rxData[21] = { };
 // GPIO 5 -- CS2
 // GPIO 4 -- CS3
 // GPIO 34 -- INT1
-// GPIO 21 -- INT2
+// GPIO 17 -- INT2
 // GPIO 16 -- INT3
 // GPIO 18 -- CLK (all 3 chips)
 // GPIO 23 -- MOSI (all 3 chips)
