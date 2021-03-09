@@ -680,6 +680,12 @@ void daqLoop(void *pvParameters) {
       for (int i = 0; i < MS4525DO_BYTES; i++) {
         daqPacket.ms4525doData[i] = Wire.read();
       }
+    } else { // did not recive the correct number of bytes
+      int bytes = Wire.available();
+      daqPacket.ms4525doData[0] = 0xC0; 
+      for (int i = 0; i < bytes; i++) { // flush wire
+        Wire.read();
+      }
     }
 
     // write bytes to SD card
