@@ -14,6 +14,6 @@ void systemLoop(void *pvParameters){
 
     // test code
     vTaskDelay(100);
-    ESP_LOGI("systemLoop", "%i", daqPacket.testValue);
+    //ESP_LOGI("systemLoop", "%i", daqPacket.testValue);
   }
 }

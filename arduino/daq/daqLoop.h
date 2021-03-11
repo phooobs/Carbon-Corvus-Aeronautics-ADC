@@ -107,6 +107,8 @@ uint8_t txData[2] = { };
 uint8_t rxData[21] = { };
 ////////////////////////////////////////////////
 
+#define LED_PIN GPIO_NUM_33
+
 // MPU9250 connections
 // GPIO 27 -- CS1
 // GPIO 5 -- CS2
@@ -618,6 +620,9 @@ void daqLoop(void *pvParameters) {
   
   daqPacket.testValue = 0;
   aquireData = true;
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);
   while (aquireData) { // loop untill told not to
 
     // test code
@@ -710,6 +715,8 @@ void daqLoop(void *pvParameters) {
     *(DAQPacket*)pvParameters = daqPacket; // send data in packet back to main
   }
 
+  digitalWrite(LED_PIN, LOW);
+  
   // Unmount SD card
   fclose(sd_card_file);
   esp_vfs_fat_sdmmc_unmount();
@@ -718,8 +725,8 @@ void daqLoop(void *pvParameters) {
 }
 
 void killDaqLoopDelay(void *pvParameters) {
-  ESP_LOGW("killDaqLoopDelay", "stopping daq loop in 10000ms");
-  vTaskDelay(10000 / portTICK_PERIOD_MS);
+  ESP_LOGW("killDaqLoopDelay", "stopping daq loop in 600000ms"); // 10min
+  vTaskDelay(600000 / portTICK_PERIOD_MS);
   aquireData = false;
   ESP_LOGW("killDaqLoopDelay", "daq loop stopped");
   vTaskDelete(NULL); // kill this task
