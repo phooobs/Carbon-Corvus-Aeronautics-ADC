@@ -19,7 +19,7 @@ For all of the following steps and installers, use the default settings. If you 
 5. Type in the following commands.
 
     ``` bash
-    git clone https://github.com/phooobs/Carbon-Corvus-Aeronautics-DAQ
+    git clone https://github.com/whoisjim/Carbon-Corvus-Aeronautics-DAQ
     ```
 
 6. Setup is complete.
