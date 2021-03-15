@@ -608,9 +608,23 @@ void daqLoop(void *pvParameters) {
     vTaskDelete(NULL); // kill this task
   }
 
+  // find file index and get file path
+  int fileIndex = 0;
+  char filePath[11];
+  while (true) {
+    sprintf(filePath, "/sd/%i.raw", fileIndex);
+    FILE *sd_card_file = fopen(filePath, "r");
+    if (sd_card_file == NULL) { // file at index does not exist, valid index, break
+      break;
+    } else {
+      fileIndex++;
+    }
+    fclose(sd_card_file);
+  }
+
   // Create and open file
   // note there is a file name length limit
-  FILE *sd_card_file = fopen("/sd/w_t.raw", "w");
+  FILE *sd_card_file = fopen(filePath, "w");
   if (sd_card_file == NULL) {
     ESP_LOGE("daqLoop", "Failed to open file for writing");
     vTaskDelete(NULL); // kill this task
