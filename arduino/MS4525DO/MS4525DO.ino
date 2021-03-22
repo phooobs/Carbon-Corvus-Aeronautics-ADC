@@ -37,7 +37,7 @@ void loop() {
 
   uint16_t ms4525doTemperatureRaw = 0xffe0 & (ms4525doData[2] << 8 | ms4525doData[3]) >> 5;
   float ms4525doTemperature = ((200.0f * ms4525doTemperatureRaw) / 2047) - 50;
-
+  
   // print formatted data
   switch (ms4525doStatus) {
     case 0:
@@ -53,16 +53,18 @@ void loop() {
       Serial.print(": Error .... ");
       break;
   }
+  
   Serial.print(ms4525doDifferentialPressureRaw, HEX);
+  //Serial.print(0.0211 * 100);
   Serial.print(" ");
   Serial.print(ms4525doTemperatureRaw, HEX);
   Serial.print(" : ");
-  Serial.print(ms4525doDifferentialPressure);
+  Serial.print(ms4525doDifferentialPressure, 4);
   Serial.print("PSI ");
-  Serial.print(ms4525doTemperature);
+  Serial.print(ms4525doTemperature, 4);
   Serial.print("C");
   Serial.println();
 
   Wire.endTransmission(true);
-  delay(1000);
+  delay(100);
 }

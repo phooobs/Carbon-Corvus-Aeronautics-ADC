@@ -647,7 +647,7 @@ void daqLoop(void *pvParameters) {
     if ( MPU9250_OK && AK8963_OK ) {
 
       // put data into daqPacket
-      fReadMPU9250 ( 8 , 0X3A, hAG1 );
+      fReadMPU9250 ( 6 , 0X3A, hAG1 );
       for (int i = 0; i < 6; i++) {
         daqPacket.mpu9250Data[0][i] = rxData[2 + i];
       }
@@ -660,7 +660,7 @@ void daqLoop(void *pvParameters) {
         daqPacket.mpu9250Data[0][i + 12] = rxData[2 + i];
       }
       
-      fReadMPU9250 ( 8 , 0X3A, hAG2 );
+      fReadMPU9250 ( 6 , 0X3A, hAG2 );
       // put accelerometer data into daqPacket
       for (int i = 0; i < 6; i++) {
         daqPacket.mpu9250Data[1][i] = rxData[2 + i];
@@ -674,7 +674,7 @@ void daqLoop(void *pvParameters) {
         daqPacket.mpu9250Data[1][i + 12] = rxData[2 + i];
       }
 
-      fReadMPU9250 ( 8 , 0X3A, hAG3 );
+      fReadMPU9250 ( 6 , 0X3A, hAG3 );
       // put accelerometer data into daqPacket
       for (int i = 0; i < 6; i++) {
         daqPacket.mpu9250Data[2][i] = rxData[2 + i];
