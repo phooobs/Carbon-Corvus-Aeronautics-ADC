@@ -25,16 +25,21 @@ int main()
 
 	ifstream infile;
 	infile.open(filename + ".raw", ios::in | ios::binary);
+	if (!infile.is_open()) {
+		cout << "failed to open file " << filename << ".raw" << endl;
+		return 0;
+	}
+	cout << "Converting ..." << endl;
+	
 	ofstream outfile;
 	outfile.open(filename + ".csv");
 
-	outfile << "Time (us)" << "," << "Pitot Status Code" << "," << "Differential Pressure" << "," << "Temperature" << "," << "Accel1 x" << "," << "Accel1 y" << "," << "Accel1 z" << "," << "Gyro1 x" << "," << "Gyro1 y" << "," << "Gyro1 z" << "," << "Mag1 x" << "," << "Mag1 y" << "," << "Mag1 z" << "," << "Accel2 x" << "," << "Accel2 y" << "," << "Accel2 z" << "," << "Gyro2 x" << "," << "Gyro2 y" << "," << "Gyro2 z" << "," << "Mag2 x" << "," << "Mag2 y" << "," << "Ma2 z" << "," << "Accel3 x" << "," << "Accel3 y" << "," << "Accel3 z" << "," << "Gyro3 x" << "," << "Gyro3 y" << "," << "Gyro3 z" << "," << "Mag3 x" << "," << "Mag3 y" << "," << "Mag3 z";
+	outfile << "Time (s)" << "," << "Pitot Status Code" << "," << "Differential Pressure" << "," << "Temperature" << "," << "Accel1 x" << "," << "Accel1 y" << "," << "Accel1 z" << "," << "Gyro1 x" << "," << "Gyro1 y" << "," << "Gyro1 z" << "," << "Mag1 x" << "," << "Mag1 y" << "," << "Mag1 z" << "," << "Accel2 x" << "," << "Accel2 y" << "," << "Accel2 z" << "," << "Gyro2 x" << "," << "Gyro2 y" << "," << "Gyro2 z" << "," << "Mag2 x" << "," << "Mag2 y" << "," << "Ma2 z" << "," << "Accel3 x" << "," << "Accel3 y" << "," << "Accel3 z" << "," << "Gyro3 x" << "," << "Gyro3 y" << "," << "Gyro3 z" << "," << "Mag3 x" << "," << "Mag3 y" << "," << "Mag3 z";
 
 	while (!infile.eof())
 	{
 		delim = infile.get();
 		delimI = delim;
-		cout << delimI << "\n";
 		if (delimI != -1) { cout << "incorrect delimiter byte \n"; }
 		outfile << "\n";
 
@@ -59,20 +64,20 @@ int main()
   		uint16_t ms4525doTemperatureRaw = 0xffe0 & (ms4525doData[2] << 8 | ms4525doData[3]) >> 5;
   		float ms4525doTemperature = ((200.0f * ms4525doTemperatureRaw) / 2047) - 50;
 
-  switch (ms4525doStatus) {
-    case 0:
-      outfile << "Ok ,";
-      break;
-    case 1:
-      outfile << "Reserved ,";
-      break;
-    case 2:
-      outfile << "Stale ,";
-      break;
-    default:
-      outfile << "Error ,";
-      break;
-  }
+		switch (ms4525doStatus) {
+   			case 0:
+      				outfile << "Ok ,";
+      				break;
+			case 1:
+      				outfile << "Reserved ,";
+      				break;
+			case 2:
+      				outfile << "Stale ,";
+      				break;
+    			default:
+      				outfile << "Error ,";
+      				break;
+		}
 
 		// airspeed sensor
 
@@ -95,8 +100,7 @@ int main()
 			// gyro
 			gyro = infile.get() << 8 | infile.get();
 			gyroI = gyro;
-			// outfile << gyroI * _gyroScale << ",";
-			outfile << gyroI << ",";
+			outfile << gyroI * _gyroScale << ",";
 
 		}
 		for (int i = 0; i < 3; i++)
@@ -120,8 +124,7 @@ int main()
 			// gyro
 			gyro = infile.get() << 8 | infile.get();
 			gyroI = gyro;
-			// outfile << gyroI * _gyroScale << ",";
-			outfile << gyroI << ",";
+			outfile << gyroI * _gyroScale << ",";
 		}
 		for (int i = 0; i < 3; i++)
 		{
@@ -144,8 +147,7 @@ int main()
 			// gyro
 			gyro = infile.get() << 8 | infile.get();
 			gyroI = gyro;
-			// outfile << gyroI * _gyroScale << ",";
-			outfile << gyroI << ",";
+			outfile << gyroI * _gyroScale << ",";
 		}
 		for (int i = 0; i < 3; i++)
 		{
@@ -155,4 +157,5 @@ int main()
 			outfile << magI << ",";
 		}
 	}
+	cout << "Done!" << endl;
 }
