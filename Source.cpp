@@ -16,8 +16,8 @@ int main()
 
 	char delim;
 	float delimI, accelI, gyroI, magI, tempI, timeI, airspeedI;
-	float _accelScale = 16.0f / 32768.0f;
-	float _gyroScale = 1000.0f / 32768.0f;
+	float _accelScale = 4.0 / 32768.0f;
+	float _gyroScale = 500.0f / 32768.0f;
 	//float _magScaleX = ((((float)rxData[0]) - 128.0f) / (256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
 
 	int16_t accel, gyro, mag, temp, airspeed;
