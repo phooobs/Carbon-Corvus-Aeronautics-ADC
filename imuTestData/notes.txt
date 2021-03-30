@@ -1,0 +1,9 @@
+Only a single IMU was connected to the body port for each test.
+
+Files are named after number written on accelerometer.
+
+2 was unable to exit daq loop and unable to save data.
+4 was unable to exit daq loop and unable to save data.
+5 was unable to exit daq loop and unable to save data.
+
+Additionaly testing in the right port only, 1 was unable to exit daq loop and save data.
