@@ -34,7 +34,7 @@ int main()
 	ofstream outfile;
 	outfile.open(filename + ".csv");
 
-	outfile << "Time (s)" << "," << "Pitot Status Code" << "," << "Differential Pressure" << "," << "Temperature" << "," << "Accel1 x" << "," << "Accel1 y" << "," << "Accel1 z" << "," << "Gyro1 x" << "," << "Gyro1 y" << "," << "Gyro1 z" << "," << "Mag1 x" << "," << "Mag1 y" << "," << "Mag1 z" << "," << "Accel2 x" << "," << "Accel2 y" << "," << "Accel2 z" << "," << "Gyro2 x" << "," << "Gyro2 y" << "," << "Gyro2 z" << "," << "Mag2 x" << "," << "Mag2 y" << "," << "Ma2 z" << "," << "Accel3 x" << "," << "Accel3 y" << "," << "Accel3 z" << "," << "Gyro3 x" << "," << "Gyro3 y" << "," << "Gyro3 z" << "," << "Mag3 x" << "," << "Mag3 y" << "," << "Mag3 z";
+	outfile << "Time (s)" << "," << "Pitot Status Code" << "," << "Differential Pressure" << "," << "Temperature" << "," << "Accel1 x" << "," << "Accel1 y" << "," << "Accel1 z" << "," << "Gyro1 x" << "," << "Gyro1 y" << "," << "Gyro1 z" << "," << "Accel2 x" << "," << "Accel2 y" << "," << "Accel2 z" << "," << "Gyro2 x" << "," << "Gyro2 y" << "," << "Gyro2 z" << "," << "Accel3 x" << "," << "Accel3 y" << "," << "Accel3 z" << "," << "Gyro3 x" << "," << "Gyro3 y" << "," << "Gyro3 z";
 
 	while (!infile.eof())
 	{
@@ -49,7 +49,7 @@ int main()
 		outfile << timeI * .000001 << ",";
 
  		uint8_t ms4525doData[4] = {0, 0, 0, 0};
-		for (int i = 0; i<4; i++){
+		for (int i = 0; i < 4; i++){
 			ms4525doData[i] = infile.get();
 		}
 		uint8_t ms4525doStatus = (ms4525doData[0] & 0xC0) >> 6;
@@ -103,13 +103,6 @@ int main()
 			outfile << gyroI * _gyroScale << ",";
 
 		}
-		for (int i = 0; i < 3; i++)
-		{
-			// mag
-			mag = infile.get() << 8 | infile.get();
-			magI = mag;
-			outfile << magI << ",";
-		}
 
 		// mpu 2
 		for (int i = 0; i < 3; i++)
@@ -126,13 +119,6 @@ int main()
 			gyroI = gyro;
 			outfile << gyroI * _gyroScale << ",";
 		}
-		for (int i = 0; i < 3; i++)
-		{
-			// mag
-			mag = infile.get() << 8 | infile.get();
-			magI = mag;
-			outfile << magI << ",";
-		}
 
 		// mpu 3
 		for (int i = 0; i < 3; i++)
@@ -148,13 +134,6 @@ int main()
 			gyro = infile.get() << 8 | infile.get();
 			gyroI = gyro;
 			outfile << gyroI * _gyroScale << ",";
-		}
-		for (int i = 0; i < 3; i++)
-		{
-			// mag
-			mag = infile.get() << 8 | infile.get();
-			magI = mag;
-			outfile << magI << ",";
 		}
 	}
 	cout << "Done!" << endl;
