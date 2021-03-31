@@ -34,7 +34,7 @@ int main()
 	ofstream outfile;
 	outfile.open(filename + ".csv");
 
-	outfile << "Time (s)" << "," << "Pitot Status Code" << "," << "Differential Pressure" << "," << "Temperature" << "," << "Accel1 x" << "," << "Accel1 y" << "," << "Accel1 z" << "," << "Gyro1 x" << "," << "Gyro1 y" << "," << "Gyro1 z" << "," << "Accel2 x" << "," << "Accel2 y" << "," << "Accel2 z" << "," << "Gyro2 x" << "," << "Gyro2 y" << "," << "Gyro2 z" << "," << "Accel3 x" << "," << "Accel3 y" << "," << "Accel3 z" << "," << "Gyro3 x" << "," << "Gyro3 y" << "," << "Gyro3 z";
+	outfile << "Time (s)" << "," << "Pitot Status Code" << "," << "Differential Pressure (psi)" << "," << "Temperature (c)" << "," << "Body Accel x (g)" << "," << "Body Accel y (g)" << "," << "Body Accel z (g)" << "," << "Body Gyro x (°/s)" << "," << "Body Gyro y (°/s)" << "," << "Body Gyro z (°/s)" << "," << "Left Accel x (g)" << "," << "Left Accel y (g)" << "," << "Left Accel z (g)" << "," << "Left Gyro x (°/s)" << "," << "Left Gyro y (°/s)" << "," << "Left Gyro z (°/s)" << "," << "Right Accel x (g)" << "," << "Right Accel y (g)" << "," << "Right Accel z (g)" << "," << "Right Gyro x (°/s)" << "," << "Right Gyro y (°/s)" << "," << "Right Gyro z (°/s)";
 
 	while (!infile.eof())
 	{
