@@ -44,17 +44,3 @@ If you run into any issues please message James.
 7. Click the right pointing arrow button.
 8. Verify that the program compiled and was flashed successfully.
 9. Programming is complete, you may now unplug the ESP32.
-
-## Todo
-
-- [x] Multithreading
-- [x] Gyroscope reading
-- [x] Air speed sensor reading
-- [x] SD card writing
-- [x] SD card reading
-- [ ] Online sensor fusion
-- [x] Offline sensor fusion
-- [ ] PWM input from radio module
-- [ ] PWM output
-- [ ] Active stability control
-- [ ] Fail safe functionality
