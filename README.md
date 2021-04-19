@@ -48,12 +48,12 @@ If you run into any issues please message James.
 ## Todo
 
 - [x] Multithreading
-- [ ] Gyroscope reading `Scott`
+- [x] Gyroscope reading
 - [x] Air speed sensor reading
 - [x] SD card writing
-- [ ] SD card reading `James`
+- [x] SD card reading
 - [ ] Online sensor fusion
-- [ ] Offline sensor fusion
+- [x] Offline sensor fusion
 - [ ] PWM input from radio module
 - [ ] PWM output
 - [ ] Active stability control
