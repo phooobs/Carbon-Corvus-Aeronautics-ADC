@@ -1,8 +1,15 @@
+clear all
+close all
+clc
+
 M = readmatrix('data/0_15_-15_fiberglass_4_18_2021_a');
 
-%M = M(1:50000,:);
-p = 30000;
-M = M(1+p:1000+p,:);
+%M = M(1:40000,:);
+%startD = 6000;
+%endD = 8000; 
+startD = 1;
+endD = 40000; 
+M = M(startD:endD,:);
 
 t = M(:,1);
 
@@ -38,6 +45,15 @@ for j = 0:2
     %Gx(:,j + 1) = lowpass(Gx(:,j + 1), cuttoffFrequency, 1/dt);
     %Gy(:,j + 1) = lowpass(Gy(:,j + 1), cuttoffFrequency, 1/dt);
     %Gz(:,j + 1) = lowpass(Gz(:,j + 1), cuttoffFrequency, 1/dt);
+    
+    % high pass filter
+    %cuttoffFrequency = 1;
+    %Ax(:,j + 1) = highpass(Ax(:,j + 1), cuttoffFrequency, 1/dt);
+    %Ay(:,j + 1) = highpass(Ay(:,j + 1), cuttoffFrequency, 1/dt);
+    %Az(:,j + 1) = highpass(Az(:,j + 1), cuttoffFrequency, 1/dt);
+    %Gx(:,j + 1) = highpass(Gx(:,j + 1), cuttoffFrequency, 1/dt);
+    %Gy(:,j + 1) = highpass(Gy(:,j + 1), cuttoffFrequency, 1/dt);
+    %Gz(:,j + 1) = highpass(Gz(:,j + 1), cuttoffFrequency, 1/dt);
 
     % Convert gyroscope measurements to radians
     Gx_rad = Gx(:,j + 1) * pi / 180.0;
@@ -111,6 +127,24 @@ for j = 0:2
     
     phi_hat_kalman(:, j + 1) = phi_hat_kalman(:, j + 1) * 180.0 / pi;
     theta_hat_kalman(:, j + 1) = theta_hat_kalman(:, j + 1) * 180.0 / pi;
+    
+    if (j == 1) % rotate body only for 4-18-2020
+        % pitch = roll
+        % roll = -pitch
+        temp = phi_hat_kalman(:, 2);
+        phi_hat_kalman(:, 2) = -theta_hat_kalman(:, 2);
+        theta_hat_kalman(:, 2) = temp;
+    end
+    
+    % low pass filter
+    %cuttoffFrequency = 0.001;
+    %phi_hat_kalman(:,j + 1) = lowpass(phi_hat_kalman(:,j + 1), cuttoffFrequency, 1/dt);
+    %theta_hat_kalman(:,j + 1) = lowpass(theta_hat_kalman(:,j + 1), cuttoffFrequency, 1/dt);
+    
+    % high pass filter
+    %cuttoffFrequency = 10;
+    %phi_hat_kalman(:,j + 1) = highpass(phi_hat_kalman(:,j + 1), cuttoffFrequency, 1/dt);
+    %theta_hat_kalman(:,j + 1) = highpass(theta_hat_kalman(:,j + 1), cuttoffFrequency, 1/dt);
 
     % Plots
     figure(1)
@@ -133,58 +167,107 @@ end
 
 % Plot bend vs A0A
 figure(2)
+subplot(1, 2, 1);
+title('Left')
 bend = phi_hat_kalman(:, 1) - phi_hat_kalman(:, 2);
 twist = theta_hat_kalman(:, 1) - theta_hat_kalman(:, 2);
 surface([bend, bend],...
     [twist, twist],...
-    [zeros(size(t)), zeros(size(t))],...
-    [t,t],...
+    [(1:length(t))' + startD, (1:length(t))' + startD],...
+    [t, t],...
 	'FaceColor', 'no',...
 	'EdgeColor', 'interp');
+xlabel('Bend (Degrees)')
+ylabel('Twist AoA (Degrees)')
 hold on
+[p, S] = polyfit(bend, twist, 1);
+x = -40:30;
+[y, delta] = polyval(p, x, S);
+plot(x, y, 'r');
+plot(x, y + 2 * delta, 'r--', x, y - 2 * delta, 'r--');
+grid on
+axis([-40 30 -30 30])
+subplot(1, 2, 2);
+title('Right')
 bend = phi_hat_kalman(:, 3) - phi_hat_kalman(:, 2);
 twist = theta_hat_kalman(:, 3) - theta_hat_kalman(:, 2);
 surface([bend, bend],...
     [twist, twist],...
-    [zeros(size(t)), zeros(size(t))],...
-    [t,t],...
+    [(1:length(t))' + startD, (1:length(t))' + startD],...
+    [t, t],...
 	'FaceColor', 'no',...
 	'EdgeColor', 'interp');
 xlabel('Bend (Degrees)')
 ylabel('Twist AoA (Degrees)')
-grid on
-
-bend = cat(1, phi_hat_kalman(:, 1) - phi_hat_kalman(:, 2), phi_hat_kalman(:, 3) - phi_hat_kalman(:, 2));
-twist = cat(1, theta_hat_kalman(:, 1) - theta_hat_kalman(:, 2), theta_hat_kalman(:, 3) - theta_hat_kalman(:, 2));
-
+hold on
 [p, S] = polyfit(bend, twist, 1);
-x = -25:45;
 [y, delta] = polyval(p, x, S);
+plot(x, y, 'r');
+plot(x, y + 2 * delta, 'r--', x, y - 2 * delta, 'r--');
+grid on
+axis([-40 30 -30 30])
+
+% both
+%bend = cat(1, phi_hat_kalman(:, 1) - phi_hat_kalman(:, 2), phi_hat_kalman(:, 3) - phi_hat_kalman(:, 2));
+%twist = cat(1, theta_hat_kalman(:, 1) - theta_hat_kalman(:, 2), theta_hat_kalman(:, 3) - theta_hat_kalman(:, 2));
+
+%[p, S] = polyfit(bend, twist, 1);
+%[y, delta] = polyval(p, x, S);
 %plot(x, y, 'r');
 %plot(x, y + 2 * delta, 'r--', x, y - 2 * delta, 'r--');
+hold off
+
 
 % Plot heatmap:
-figure(3)
-xpts = linspace(-30, 50, 500);
-ypts = linspace(-80, 60, 500);
-N = min(histcounts2(twist(:), bend(:), ypts, xpts) * 10, 60);
 [xG, yG] = meshgrid(-5:5);
 sigma = 2.5;
 g = exp(-xG.^2./(2.*sigma.^2)-yG.^2./(2.*sigma.^2));
 g = g./sum(g(:));
+xpts = linspace(-40, 30, 500);
+ypts = linspace(-30, 30, 500);
 
+figure(3)
+subplot(1, 2, 1);
+title('Left')
+
+bend = phi_hat_kalman(:, 1) - phi_hat_kalman(:, 2);
+twist = theta_hat_kalman(:, 1) - theta_hat_kalman(:, 2);
+N = min(histcounts2(twist(:), bend(:), ypts, xpts) * 10, 60);
 imagesc(xpts, ypts, conv2(N, g, 'same'));
 set(gca, 'XLim', xpts([1 end]), 'YLim', ypts([1 end]), 'YDir', 'normal');
 hold on
-%plot(x, y, 'r');
-%plot(x, y + 2 * delta, 'r--', x, y - 2 * delta, 'r--');
+[p, S] = polyfit(bend, twist, 1);
+[y, delta] = polyval(p, x, S);
+plot(x, y, 'r');
+plot(x, y + 2 * delta, 'r--', x, y - 2 * delta, 'r--');
 xlabel('Bend (Degrees)')
 ylabel('Twist AoA (Degrees)')
+hold off
+
+subplot(1, 2, 2);
+title('Right')
+
+bend = phi_hat_kalman(:, 3) - phi_hat_kalman(:, 2);
+twist = theta_hat_kalman(:, 3) - theta_hat_kalman(:, 2);
+N = min(histcounts2(twist(:), bend(:), ypts, xpts) * 10, 60);
+imagesc(xpts, ypts, conv2(N, g, 'same'));
+set(gca, 'XLim', xpts([1 end]), 'YLim', ypts([1 end]), 'YDir', 'normal');
+hold on
+[p, S] = polyfit(bend, twist, 1);
+[y, delta] = polyval(p, x, S);
+plot(x, y, 'r');
+plot(x, y + 2 * delta, 'r--', x, y - 2 * delta, 'r--');
+xlabel('Bend (Degrees)')
+ylabel('Twist AoA (Degrees)')
+hold off
 
 % animated dot
-figure(4)
-for i=1:length(t)
-    plot(bend(i),twist(i),'or','MarkerSize',5,'MarkerFaceColor','r')
-    axis([-30 50 -80 60])
-    pause(.05)
-end
+%figure(4)
+%xlabel('Bend (Degrees)')
+%ylabel('Twist AoA (Degrees)')
+%for i=1:10:length(t)
+%    plot(bend(i),twist(i),'or','MarkerSize',5,'MarkerFaceColor','r')
+%    axis([-40 30 -30 30])
+%    pause(.05)
+%end
+
