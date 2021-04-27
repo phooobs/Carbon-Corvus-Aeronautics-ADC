@@ -10,11 +10,11 @@ Austin McCaw, Elizabeth Blackwater, Orion Clay, Arielle Platero
 
 ## Software Structure
 
-![Software Structure](.\diagrams\esp_ssoft.png)
+![Software Structure](./diagrams/esp_ssoft.png)
 
 ## Connections
 
-![Connections](.\diagrams\esp_sch_w_photo.png)
+![Connections](./diagrams/esp_sch_w_photo.png)
 
 ## Data Analysis Tools
 
