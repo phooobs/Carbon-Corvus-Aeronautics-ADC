@@ -8,6 +8,13 @@ James Ferguson, Scott Orban
 **GE Team:**
 Austin McCaw, Elizabeth Blackwater, Orion Clay, Arielle Platero
 
+## Data Analysis Tools
+
+- `raw_to_csv.exe` converts `.raw` files collected by the DAQ into `.csv` files for ease of use and analysis with other tools such as MATLAB or Python.
+- `test_quick_plot.py` Simply generates a plot showing all data in a `.csv` created with `raw_to_csv.exe`. Mainly used to verify if a test correctly collected data.
+- `test_quick_plot_freq.py` Performs a Fourier transform on the data for frequency analysis and plots
+- `attitude_estimation.m` For evaluating the bend and twist of wings inflight.
+
 ## How to setup
 
 For all of the following steps and installers, use the default settings. If you run into any issues please message James.
