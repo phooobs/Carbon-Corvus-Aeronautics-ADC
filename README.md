@@ -8,6 +8,14 @@ James Ferguson, Scott Orban
 **GE Team:**
 Austin McCaw, Elizabeth Blackwater, Orion Clay, Arielle Platero
 
+## Software Structure
+
+![Software Structure](diagrams\esp_ssoft.png)
+
+## Connections
+
+![Connections](diagrams\esp_sch_w_photo.png)
+
 ## Data Analysis Tools
 
 - `raw_to_csv.exe` converts `.raw` files collected by the DAQ into `.csv` files for ease of use and analysis with other tools such as MATLAB or Python.
