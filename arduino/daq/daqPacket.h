@@ -1,5 +1,5 @@
 /*
-  This is the struct that the daq populates for the rest of the program
+  This Struct is used to share sensor data with the rest of the system
 */
 
 #pragma once
